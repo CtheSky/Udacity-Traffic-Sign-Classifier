@@ -3,56 +3,121 @@
 
 Overview
 ---
-In this project, you will use what you've learned about deep neural networks and convolutional neural networks to classify traffic signs. You will train and validate a model so it can classify traffic sign images using the [German Traffic Sign Dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset). After the model is trained, you will then try out your model on images of German traffic signs that you find on the web.
-
-We have included an Ipython notebook that contains further instructions 
-and starter code. Be sure to download the [Ipython notebook](https://github.com/udacity/CarND-Traffic-Sign-Classifier-Project/blob/master/Traffic_Sign_Classifier.ipynb). 
-
-We also want you to create a detailed writeup of the project. Check out the [writeup template](https://github.com/udacity/CarND-Traffic-Sign-Classifier-Project/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup. The writeup can be either a markdown file or a pdf document.
-
-To meet specifications, the project will require submitting three files: 
-* the Ipython notebook with the code
-* the code exported as an html file
-* a writeup report either as a markdown or pdf file 
-
-Creating a Great Writeup
----
-A great writeup should include the [rubric points](https://review.udacity.com/#!/rubrics/481/view) as well as your description of how you addressed each point.  You should include a detailed description of the code used in each step (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
-
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
-
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup.
-
-The Project
----
-The goals / steps of this project are the following:
+This project uses CNN to classify traffic signs using the [German Traffic Sign Dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset).The goals / steps of this project are the following:
 * Load the data set
 * Explore, summarize and visualize the data set
 * Design, train and test a model architecture
 * Use the model to make predictions on new images
 * Analyze the softmax probabilities of the new images
-* Summarize the results with a written report
+* Summarize the results with a written report  
+ 
+Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/481/view) individually and describe how I addressed each point in my implementation.  
 
-### Dependencies
-This lab requires:
+### Data Set Summary & Exploration
+Summary statistics of the traffic signs data set:
+* Number of training examples = 34799
+* Number of validation examples = 4410
+* Number of testing examples = 12630
+* Image data shape = (32, 32, 3)
+* Number of classes = 43  
+  
+Some images and distribution of dataset:
+![plot_sample_images](/examples/plot_sample_images.png)
+![distribution](/examples/distribution.png)
+The graph shows that distribution of traffic signs are similiar between training, validation and testing set.
+And 5 most or least common traffic signs in training data are:   
 
-* [CarND Term1 Starter Kit](https://github.com/udacity/CarND-Term1-Starter-Kit)
+**Most common five:**
+ - 5.78%, 2010 images --- Speed limit (50km/h)
+ - 5.69%, 1980 images --- Speed limit (30km/h)
+ - 5.52%, 1920 images --- Yield
+ - 5.43%, 1890 images --- Priority road
+ - 5.34%, 1860 images --- Keep right
 
-The lab environment can be created with CarND Term1 Starter Kit. Click [here](https://github.com/udacity/CarND-Term1-Starter-Kit/blob/master/README.md) for the details.
+**Least common five:**
+* 0.60%, 210 images --- End of no passing
+* 0.60%, 210 images --- End of no passing by vehicles over 3.5 metric tons
+* 0.52%, 180 images --- Speed limit (20km/h)
+* 0.52%, 180 images --- Dangerous curve to the left
+* 0.52%, 180 images --- Go straight or left
 
-### Dataset and Repository
+### Data Preprocessing
+#####  Apply grayscale   
+Using grayscale will lose information about the color but make it easier for the network to learn. 
+The information carried in grayscale image is enough for the classification task since 
+it can still get high accuracy with grayscale. After a couple of trials, 
+I decide to apply grayscale since it's easier to learn and computationally cheaper.  
+![grayscale](/examples/grayscale.jpg)
+  
+##### Apply Normalization  
+Normalization helps the nerwork converge, here I normalize the pixel value roughly between -1 and 1.
 
-1. Download the data set. The classroom has a link to the data set in the "Project Instructions" content. This is a pickled dataset in which we've already resized the images to 32x32. It contains a training, validation and test set.
-2. Clone the project, which contains the Ipython notebook and the writeup template.
-```sh
-git clone https://github.com/udacity/CarND-Traffic-Sign-Classifier-Project
-cd CarND-Traffic-Sign-Classifier-Project
-jupyter notebook Traffic_Sign_Classifier.ipynb
-```
+### Model Architecture
+The model is based with on LeNet with following changes:  
 
-### Requirements for Submission
-Follow the instructions in the `Traffic_Sign_Classifier.ipynb` notebook and write the project report using the writeup template as a guide, `writeup_template.md`. Submit the project code and writeup document.
+##### change the size of fully-connected layer to 1024
+Since the num of classes increases from 10 to 43 so the original sizes of 120, 80 may not have enough 
+learning capicity, so I increased both sizes to 1024.  
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+##### change the weight initial method to xavier
+This change targets at gradient explode/vanish problem. It's introduced in this [paper](http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf) 
+and reduce the problem by making input variance same as output variance of each layer. And it's
+the default weight initializer of `tf.layers.conv2d`.
 
+#### apply batch normalization to convolution and fully-connected layers
+This one speeds up learning and also acts as a regularizer. It's introduced in this [paper](https://arxiv.org/pdf/1502.03167v3.pdf).
+The technique consists of adding an operation in the model 
+just before the activation function of each layer, simply zero-centering and normalizing the inputs, 
+then scaling and shifting the result using two new parameters per layer (one for scaling, the other for shifting)
+It makes each layer learn from previous layer 
+with a relatively fixed distribution than a moving target. 
+
+#### change activation function to elu for fully-connected layers
+`elu` is introduced in this [paper](https://arxiv.org/pdf/1511.07289v5.pdf) and author show that 
+it outperform all ReLU variants in their experiments. After some trials, I find it doesn't work very well
+with on conv layer. But when applied to only fc layer it provides a higher validation accuracy so I
+only apply it to fc layers.
+
+#### apply dropout to fully-connected layers except for the last one
+#### apply l2 regularization to convolution and fully-connected layers
+The last two was applied after I tried the model some times and find that the model is overfitting.
+Dropout randomly ignore some nodes in a layer. It makes network can't rely on a specific input and become like
+an ensemble of different sub-networks. Regularization makes weights smaller and both make the network 
+generalize more. After trials, I end up with a 0.5 dropout rate and 1e-5 regularization param.  
+
+| Layer         		    |     Description	        					| 
+|:---------------------:|:--------------------------------------------:| 
+| Input         		    | 32x32x1 grayscale image   							     | 
+| Convolution 3x3     	| 1x1 stride, valid padding, outputs 28x28x6 	 |
+| Batch Normalization		|												|
+| RELU		 	 		        |												|
+| Max pooling	      	  | 2x2 kernel size, 2x2 stride, outputs 14x14x6 |
+| Convolution 3x3	      | 1x1 stride, valid padding, outputs 10x10x6   |
+| Batch Normalization		|												|
+| RELU		 	 		        |												|
+| Max pooling	      	  | 2x2 kernel size, 2x2 stride, outputs 5x5x16|
+|	Flattern					    |	inputs 5x5x16, outputs 400								 |
+| Fully connected		    | inputs 400, outputs 1024       						 |
+| Batch Normalization		|												|
+| ELU		 	 		          |												|
+| Fully connected		    | inputs 1024, outputs 1024      						 |
+| Batch Normalization		|												|
+| ELU		 	 		          |												|
+| Fully connected		    | inputs 1024, outputs 43      						   |
+
+### Train and Test Model
+Here I choose Adam optimizer since it works well. It combines monmentum and rmsprop and becomes a common
+choice know. I train the model with 1e-3 learning rate, 50 epochs and 64 batch size. I compute validation 
+accuracy every 10 steps, compare and save the best model so far. And when validation accuracy is higher
+than 93% the batch size is set to 512. The final model results were:  
+* training set accuracy of 99.55% 
+* validation set accuracy of 97.37%
+* testing set accuracy of 95.94%
+![tensorboard_scalar](/examples/tensorboard_scalar.png)
+
+### Test Model on New Images
+Here I choose 5 images from testing data to visualize the softmax prediction, the images are:
+![plot_test_images](/examples/plot_test_images.png)
+  
+And top 5 from softmax predictions for these images are:
+![softmax.png](/examples/softmax.png)
