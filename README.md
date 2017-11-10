@@ -118,6 +118,15 @@ than 93% the batch size is set to 512. The final model results were:
 ### Test Model on New Images
 Here I choose 5 images from testing data to visualize the softmax prediction, the images are:
 ![plot_test_images](/examples/plot_test_images.png)
-  
+
 And top 5 from softmax predictions for these images are:
 ![softmax.png](/examples/softmax.png)
+
+The third traffic sign is partially blocked by the tree and it indeed gets a lower softmax
+score. Characteristics of image that make it difficult to classify could be:
+* partially blocked by other objects
+* rotation and angle  
+* low contrast
+
+Since they are not met in training & validation data a lot so the model hasn't learned a lot
+to deal with these cases.
