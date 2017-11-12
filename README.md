@@ -10,8 +10,19 @@ This project uses CNN to classify traffic signs using the [German Traffic Sign D
 * Use the model to make predictions on new images
 * Analyze the softmax probabilities of the new images
 * Summarize the results with a written report  
- 
+
 Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/481/view) individually and describe how I addressed each point in my implementation.  
+
+### Demo
+This demo script classify a cropped image using trained model:
+```bash
+> python classify_traffic_sign.py -h
+usage: classify_traffic_sign.py [-h] [--filename FILENAME]
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --filename FILENAME  cropped traffic sign image
+```
 
 ### Data Set Summary & Exploration
 Summary statistics of the traffic signs data set:
