@@ -14,7 +14,7 @@ This project uses CNN to classify traffic signs using the [German Traffic Sign D
 Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/481/view) individually and describe how I addressed each point in my implementation.  
 
 ### Demo
-This demo script classify a cropped image using trained model:
+This demo script classify a cropped image using trained model (tensorflow required):
 ```bash
 > python classify_traffic_sign.py -h
 usage: classify_traffic_sign.py [-h] [--filename FILENAME]
